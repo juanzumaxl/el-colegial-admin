@@ -28,7 +28,7 @@
     .mensaje.ok { background: #1a4030; color: #5ab07a; border: 1px solid #5ab07a; }
     .mensaje.error { background: #401a1a; color: #e07070; border: 1px solid #e07070; }
     .noticias-lista { display: flex; flex-direction: column; gap: 10px; }
-    .noticia-item { background: #0f1e3a; border-radius: 8px; padding: 12px; border: 1px solid #2a4060; display: flex; justify-content: space-between; align-items: flex-start; }
+    .noticia-item { background: #0f1e3a; border-radius: 8px; padding: 12px; border: 1px solid #2a4060; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
     .noticia-item h3 { font-size: 13px; color: #e0e8f8; margin-bottom: 4px; }
     .noticia-item p { font-size: 11px; color: #7a9cc4; }
     .badge { font-size: 10px; background: #1c3b6a; color: #c8973a; padding: 2px 8px; border-radius: 4px; }
@@ -36,6 +36,14 @@
     .btn-eliminar:hover { background: #e07070; color: white; }
     .config-box { background: #0f1e3a; border: 1px solid #c8973a33; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #7a9cc4; }
     .config-box input { margin-top: 6px; }
+    .upload-area { border: 2px dashed #2a4060; border-radius: 8px; padding: 20px; text-align: center; margin-top: 8px; cursor: pointer; transition: border-color 0.2s; }
+    .upload-area:hover { border-color: #c8973a; }
+    .upload-area input[type="file"] { display: none; }
+    .preview-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: none; }
+    .upload-btn { background: #1c3b6a; border: 1px solid #c8973a; color: #c8973a; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; margin-top: 8px; }
+    .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .progress { height: 4px; background: #0f1e3a; border-radius: 2px; margin-top: 8px; display: none; }
+    .progress-bar { height: 100%; background: #c8973a; border-radius: 2px; width: 0%; transition: width 0.3s; }
   </style>
 </head>
 <body>
@@ -50,10 +58,10 @@
 
 <div class="container">
 
-  <!-- CONFIGURACION -->
+  <!-- CONFIGURACION FIREBASE -->
   <div class="card">
     <h2>⚙️ Configuración de Firebase</h2>
-    <p style="font-size:12px; color:#7a9cc4; margin-bottom:12px">Pega aquí los datos de tu proyecto Firebase. Solo se guardan en tu navegador.</p>
+    <p style="font-size:12px; color:#7a9cc4; margin-bottom:12px">Solo se guardan en tu navegador.</p>
     <div class="config-box">
       <label>API Key</label>
       <input type="text" id="cfg-apiKey" placeholder="AIza...">
@@ -84,11 +92,21 @@
     </select>
     <label>Fecha</label>
     <input type="text" id="fecha" placeholder="Ej: Junio 2025">
-    <label>URL de imagen (opcional)</label>
-    <input type="text" id="imagenUrl" placeholder="https://...">
+
+    <!-- SUBIDA DE IMAGEN -->
+    <label>Imagen</label>
+    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept="image/*" onchange="previsualizarImagen(event)">
+      <p style="color:#4a6a8a; font-size:13px">📷 Haz clic para seleccionar una imagen</p>
+      <img id="preview-img" class="preview-img">
+    </div>
+    <button class="upload-btn" id="btn-subir" onclick="subirImagen()" disabled>⬆️ Subir imagen a Cloudinary</button>
+    <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+    <input type="text" id="imagenUrl" placeholder="URL de imagen (se llena automáticamente al subir)" style="margin-top:8px" readonly>
+
     <div class="toggle-row">
       <input type="checkbox" id="destacada">
-      <label for="destacada">Marcar como noticia destacada (aparece en el banner principal)</label>
+      <label for="destacada">Marcar como noticia destacada</label>
     </div>
     <button class="btn" id="btn-publicar" onclick="publicarNoticia()">Publicar noticia</button>
     <div id="msg-publicar" class="mensaje"></div>
@@ -108,7 +126,11 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+  const CLOUDINARY_CLOUD = "duuzna0pf";
+  const CLOUDINARY_PRESET = "ml_default";
+
   let db = null;
+  let archivoSeleccionado = null;
 
   function mostrarMensaje(id, texto, tipo) {
     const el = document.getElementById(id);
@@ -138,6 +160,48 @@
     cargarNoticias();
   }
 
+  window.previsualizarImagen = function(event) {
+    const archivo = event.target.files[0];
+    if (!archivo) return;
+    archivoSeleccionado = archivo;
+    const preview = document.getElementById('preview-img');
+    preview.src = URL.createObjectURL(archivo);
+    preview.style.display = 'block';
+    document.getElementById('btn-subir').disabled = false;
+  }
+
+  window.subirImagen = async function() {
+    if (!archivoSeleccionado) return;
+    const btn = document.getElementById('btn-subir');
+    const progress = document.querySelector('.progress');
+    const progressBar = document.getElementById('progress-bar');
+    btn.disabled = true;
+    btn.textContent = 'Subiendo...';
+    progress.style.display = 'block';
+    progressBar.style.width = '30%';
+
+    const formData = new FormData();
+    formData.append('file', archivoSeleccionado);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+
+    try {
+      progressBar.style.width = '60%';
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      progressBar.style.width = '100%';
+      document.getElementById('imagenUrl').value = data.secure_url;
+      btn.textContent = '✅ Imagen subida';
+      setTimeout(() => { progress.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
+    } catch(e) {
+      btn.textContent = '❌ Error al subir';
+      btn.disabled = false;
+      progress.style.display = 'none';
+    }
+  }
+
   window.publicarNoticia = async function() {
     if (!db) { mostrarMensaje('msg-publicar', 'Primero guarda la configuración de Firebase.', 'error'); return; }
     const titulo = document.getElementById('titulo').value.trim();
@@ -160,6 +224,10 @@
       document.getElementById('contenido').value = '';
       document.getElementById('imagenUrl').value = '';
       document.getElementById('destacada').checked = false;
+      document.getElementById('preview-img').style.display = 'none';
+      document.getElementById('btn-subir').disabled = true;
+      document.getElementById('btn-subir').textContent = '⬆️ Subir imagen a Cloudinary';
+      archivoSeleccionado = null;
       cargarNoticias();
     } catch(e) {
       mostrarMensaje('msg-publicar', '❌ Error: ' + e.message, 'error');
@@ -182,7 +250,8 @@
         const div = document.createElement('div');
         div.className = 'noticia-item';
         div.innerHTML = `
-          <div>
+          <div style="flex:1">
+            ${d.imagenUrl ? `<img src="${d.imagenUrl}" style="width:100%;max-height:80px;object-fit:cover;border-radius:6px;margin-bottom:6px">` : ''}
             <h3>${d.titulo}</h3>
             <p>${d.fecha} &nbsp;·&nbsp; <span class="badge">${d.categoria}</span> ${d.destacada ? '⭐' : ''}</p>
           </div>
@@ -191,7 +260,7 @@
         lista.appendChild(div);
       });
     } catch(e) {
-      lista.innerHTML = '<p style="color:#e07070; font-size:13px">Error cargando noticias: ' + e.message + '</p>';
+      lista.innerHTML = '<p style="color:#e07070; font-size:13px">Error: ' + e.message + '</p>';
     }
   }
 
