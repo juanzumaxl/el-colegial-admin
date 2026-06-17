@@ -192,6 +192,7 @@
       });
       const data = await res.json();
       progressBar.style.width = '100%';
+      console.log('Respuesta Cloudinary:', JSON.stringify(data));
       document.getElementById('imagenUrl').value = data.secure_url;
       btn.textContent = '✅ Imagen subida';
       setTimeout(() => { progress.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
