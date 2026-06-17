@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El Colegial — Panel Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #0f1e3a; color: #e0e8f8; min-height: 100vh; }
+    .header { background: #1c3b6a; padding: 16px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #c8973a; }
+    .logo { width: 40px; height: 40px; background: #c8973a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: white; }
+    .header h1 { font-size: 20px; color: white; }
+    .header p { font-size: 12px; color: #7a9cc4; }
+    .container { max-width: 700px; margin: 32px auto; padding: 0 16px; }
+    .card { background: #1a2f50; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid #2a4060; }
+    .card h2 { font-size: 16px; color: #c8973a; margin-bottom: 16px; }
+    label { display: block; font-size: 12px; color: #7a9cc4; margin-bottom: 4px; margin-top: 12px; }
+    input, textarea, select { width: 100%; padding: 10px 12px; background: #0f1e3a; border: 1px solid #2a4060; border-radius: 8px; color: #e0e8f8; font-size: 14px; outline: none; }
+    input:focus, textarea:focus, select:focus { border-color: #c8973a; }
+    textarea { min-height: 120px; resize: vertical; }
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .toggle-row label { margin: 0; color: #e0e8f8; font-size: 14px; }
+    input[type="checkbox"] { width: auto; }
+    .btn { width: 100%; padding: 14px; background: #c8973a; border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    .btn:hover { background: #b07d2a; }
+    .btn:disabled { background: #555; cursor: not-allowed; }
+    .mensaje { padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 13px; display: none; }
+    .mensaje.ok { background: #1a4030; color: #5ab07a; border: 1px solid #5ab07a; }
+    .mensaje.error { background: #401a1a; color: #e07070; border: 1px solid #e07070; }
+    .noticias-lista { display: flex; flex-direction: column; gap: 10px; }
+    .noticia-item { background: #0f1e3a; border-radius: 8px; padding: 12px; border: 1px solid #2a4060; display: flex; justify-content: space-between; align-items: flex-start; }
+    .noticia-item h3 { font-size: 13px; color: #e0e8f8; margin-bottom: 4px; }
+    .noticia-item p { font-size: 11px; color: #7a9cc4; }
+    .badge { font-size: 10px; background: #1c3b6a; color: #c8973a; padding: 2px 8px; border-radius: 4px; }
+    .btn-eliminar { background: #401a1a; color: #e07070; border: 1px solid #e07070; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+    .btn-eliminar:hover { background: #e07070; color: white; }
+    .config-box { background: #0f1e3a; border: 1px solid #c8973a33; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #7a9cc4; }
+    .config-box input { margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">C</div>
+  <div>
+    <h1>El Colegial</h1>
+    <p>Panel de Administración</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- CONFIGURACION -->
+  <div class="card">
+    <h2>⚙️ Configuración de Firebase</h2>
+    <p style="font-size:12px; color:#7a9cc4; margin-bottom:12px">Pega aquí los datos de tu proyecto Firebase. Solo se guardan en tu navegador.</p>
+    <div class="config-box">
+      <label>API Key</label>
+      <input type="text" id="cfg-apiKey" placeholder="AIza...">
+      <label>Project ID</label>
+      <input type="text" id="cfg-projectId" placeholder="el-colegial">
+      <label>App ID</label>
+      <input type="text" id="cfg-appId" placeholder="1:123456:web:abc123">
+    </div>
+    <button class="btn" onclick="guardarConfig()" style="margin-top:0">Guardar configuración</button>
+    <div id="msg-config" class="mensaje"></div>
+  </div>
+
+  <!-- PUBLICAR NOTICIA -->
+  <div class="card">
+    <h2>📝 Publicar nueva noticia</h2>
+    <label>Título</label>
+    <input type="text" id="titulo" placeholder="Título de la noticia">
+    <label>Contenido</label>
+    <textarea id="contenido" placeholder="Escribe el contenido completo de la noticia..."></textarea>
+    <label>Categoría</label>
+    <select id="categoria">
+      <option value="Noticias">Noticias</option>
+      <option value="Académico">Académico</option>
+      <option value="Eventos">Eventos</option>
+      <option value="Galería">Galería</option>
+      <option value="Comunidad">Comunidad</option>
+      <option value="Devocional">Devocional</option>
+    </select>
+    <label>Fecha</label>
+    <input type="text" id="fecha" placeholder="Ej: Junio 2025">
+    <label>URL de imagen (opcional)</label>
+    <input type="text" id="imagenUrl" placeholder="https://...">
+    <div class="toggle-row">
+      <input type="checkbox" id="destacada">
+      <label for="destacada">Marcar como noticia destacada (aparece en el banner principal)</label>
+    </div>
+    <button class="btn" id="btn-publicar" onclick="publicarNoticia()">Publicar noticia</button>
+    <div id="msg-publicar" class="mensaje"></div>
+  </div>
+
+  <!-- NOTICIAS PUBLICADAS -->
+  <div class="card">
+    <h2>📋 Noticias publicadas</h2>
+    <div id="lista-noticias" class="noticias-lista">
+      <p style="color:#4a6a8a; font-size:13px">Guarda la configuración primero para ver las noticias.</p>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  let db = null;
+
+  function mostrarMensaje(id, texto, tipo) {
+    const el = document.getElementById(id);
+    el.textContent = texto;
+    el.className = `mensaje ${tipo}`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+  }
+
+  window.guardarConfig = function() {
+    const config = {
+      apiKey: document.getElementById('cfg-apiKey').value.trim(),
+      projectId: document.getElementById('cfg-projectId').value.trim(),
+      appId: document.getElementById('cfg-appId').value.trim(),
+      authDomain: document.getElementById('cfg-projectId').value.trim() + ".firebaseapp.com",
+      storageBucket: document.getElementById('cfg-projectId').value.trim() + ".appspot.com",
+      messagingSenderId: "000000000000"
+    };
+    if (!config.apiKey || !config.projectId || !config.appId) {
+      mostrarMensaje('msg-config', 'Por favor llena todos los campos.', 'error');
+      return;
+    }
+    localStorage.setItem('firebase-config', JSON.stringify(config));
+    const app = initializeApp(config, 'admin-app');
+    db = getFirestore(app);
+    mostrarMensaje('msg-config', '✅ Configuración guardada correctamente.', 'ok');
+    cargarNoticias();
+  }
+
+  window.publicarNoticia = async function() {
+    if (!db) { mostrarMensaje('msg-publicar', 'Primero guarda la configuración de Firebase.', 'error'); return; }
+    const titulo = document.getElementById('titulo').value.trim();
+    const contenido = document.getElementById('contenido').value.trim();
+    if (!titulo || !contenido) { mostrarMensaje('msg-publicar', 'El título y contenido son obligatorios.', 'error'); return; }
+    const btn = document.getElementById('btn-publicar');
+    btn.disabled = true;
+    btn.textContent = 'Publicando...';
+    try {
+      await addDoc(collection(db, 'noticias'), {
+        titulo,
+        contenido,
+        categoria: document.getElementById('categoria').value,
+        fecha: document.getElementById('fecha').value.trim() || new Date().toLocaleDateString('es-MX', {month:'long', year:'numeric'}),
+        imagenUrl: document.getElementById('imagenUrl').value.trim(),
+        destacada: document.getElementById('destacada').checked
+      });
+      mostrarMensaje('msg-publicar', '✅ Noticia publicada correctamente.', 'ok');
+      document.getElementById('titulo').value = '';
+      document.getElementById('contenido').value = '';
+      document.getElementById('imagenUrl').value = '';
+      document.getElementById('destacada').checked = false;
+      cargarNoticias();
+    } catch(e) {
+      mostrarMensaje('msg-publicar', '❌ Error: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Publicar noticia';
+  }
+
+  async function cargarNoticias() {
+    if (!db) return;
+    const lista = document.getElementById('lista-noticias');
+    lista.innerHTML = '<p style="color:#7a9cc4; font-size:13px">Cargando...</p>';
+    try {
+      const q = query(collection(db, 'noticias'), orderBy('fecha', 'desc'));
+      const snap = await getDocs(q);
+      if (snap.empty) { lista.innerHTML = '<p style="color:#4a6a8a; font-size:13px">No hay noticias publicadas aún.</p>'; return; }
+      lista.innerHTML = '';
+      snap.forEach(documento => {
+        const d = documento.data();
+        const div = document.createElement('div');
+        div.className = 'noticia-item';
+        div.innerHTML = `
+          <div>
+            <h3>${d.titulo}</h3>
+            <p>${d.fecha} &nbsp;·&nbsp; <span class="badge">${d.categoria}</span> ${d.destacada ? '⭐' : ''}</p>
+          </div>
+          <button class="btn-eliminar" onclick="eliminarNoticia('${documento.id}')">Eliminar</button>
+        `;
+        lista.appendChild(div);
+      });
+    } catch(e) {
+      lista.innerHTML = '<p style="color:#e07070; font-size:13px">Error cargando noticias: ' + e.message + '</p>';
+    }
+  }
+
+  window.eliminarNoticia = async function(id) {
+    if (!db) return;
+    if (!confirm('¿Seguro que quieres eliminar esta noticia?')) return;
+    await deleteDoc(doc(db, 'noticias', id));
+    cargarNoticias();
+  }
+
+  // Cargar config guardada
+  const saved = localStorage.getItem('firebase-config');
+  if (saved) {
+    const c = JSON.parse(saved);
+    document.getElementById('cfg-apiKey').value = c.apiKey || '';
+    document.getElementById('cfg-projectId').value = c.projectId || '';
+    document.getElementById('cfg-appId').value = c.appId || '';
+  }
+</script>
+</body>
+</html>
