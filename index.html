@@ -294,20 +294,50 @@
         });
         const div = document.createElement('div');
         div.className = 'noticia-item';
+        div.style.flexDirection = 'column';
         div.innerHTML = `
-          <div style="flex:1">
-            <div style="font-size:11px; color:#c8973a; margin-bottom:4px">👤 ${d.autorNombre}</div>
-            <p style="font-size:13px; color:#e0e8f8; margin-bottom:4px">${d.texto}</p>
-            <p style="font-size:10px; color:#4a6a8a">${fecha}</p>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; width:100%">
+            <div style="flex:1">
+              <div style="font-size:11px; color:#c8973a; margin-bottom:4px">👤 ${d.autorNombre}</div>
+              <p style="font-size:13px; color:#e0e8f8; margin-bottom:4px">${d.texto}</p>
+              <p style="font-size:10px; color:#4a6a8a">${fecha}</p>
+            </div>
+            <button class="btn-eliminar" onclick="eliminarMensaje('${documento.id}')">Eliminar</button>
           </div>
-          <button class="btn-eliminar" onclick="eliminarMensaje('${documento.id}')">Eliminar</button>
+          ${d.respuesta ? `
+            <div style="background:#1c3b6a; border-radius:8px; padding:10px; margin-top:8px; width:100%; border-left:3px solid #c8973a">
+              <div style="font-size:10px; color:#c8973a; margin-bottom:4px">✝️ Respuesta del Colegio</div>
+              <p style="font-size:12px; color:#e0e8f8">${d.respuesta}</p>
+            </div>
+          ` : ''}
+          <div style="display:flex; gap:8px; margin-top:8px; width:100%">
+            <input type="text" id="respuesta-${documento.id}" 
+              placeholder="${d.respuesta ? 'Actualizar respuesta...' : 'Escribir respuesta...'}"
+              value="${d.respuesta || ''}"
+              style="flex:1; padding:8px 10px; font-size:12px;">
+            <button onclick="responderMensaje('${documento.id}')"
+              style="background:#1c3b6a; border:1px solid #c8973a; color:#c8973a; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; white-space:nowrap;">
+              ${d.respuesta ? '✏️ Actualizar' : '✉️ Responder'}
+            </button>
+          </div>
         `;
         lista.appendChild(div);
       });
     } catch(e) {
       lista.innerHTML = '<p style="color:#e07070; font-size:13px">Error: ' + e.message + '</p>';
     }
-  }
+}
+  window.responderMensaje = async function(id) {
+    if (!db) return;
+    const respuesta = document.getElementById(`respuesta-${id}`).value.trim();
+    if (!respuesta) return;
+    try {
+      await updateDoc(doc(db, 'comunidad', id), { respuesta });
+      cargarMensajes();
+    } catch(e) {
+      alert('Error al guardar respuesta: ' + e.message);
+    }
+}
 
   window.eliminarNoticia = async function(id) {
     if (!db) return;
