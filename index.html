@@ -112,6 +112,14 @@
     <div id="msg-publicar" class="mensaje"></div>
   </div>
 
+  <!-- MENSAJES COMUNIDAD -->
+  <div class="card">
+    <h2>👥 Mensajes de Comunidad</h2>
+    <div id="lista-mensajes" class="noticias-lista">
+      <p style="color:#4a6a8a; font-size:13px">Guarda la configuración primero para ver los mensajes.</p>
+    </div>
+  </div>
+
   <!-- NOTICIAS PUBLICADAS -->
   <div class="card">
     <h2>📋 Noticias publicadas</h2>
@@ -158,6 +166,7 @@
     db = getFirestore(app);
     mostrarMensaje('msg-config', '✅ Configuración guardada correctamente.', 'ok');
     cargarNoticias();
+    cargarMensajes();
   }
 
   window.previsualizarImagen = function(event) {
@@ -265,11 +274,53 @@
     }
   }
 
+  async function cargarMensajes() {
+    if (!db) return;
+    const lista = document.getElementById('lista-mensajes');
+    lista.innerHTML = '<p style="color:#7a9cc4; font-size:13px">Cargando...</p>';
+    try {
+      const q = query(collection(db, 'comunidad'), orderBy('fecha', 'desc'));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        lista.innerHTML = '<p style="color:#4a6a8a; font-size:13px">No hay mensajes aún.</p>';
+        return;
+      }
+      lista.innerHTML = '';
+      snap.forEach(documento => {
+        const d = documento.data();
+        const fecha = new Date(d.fecha).toLocaleDateString('es-MX', {
+          day: 'numeric', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        const div = document.createElement('div');
+        div.className = 'noticia-item';
+        div.innerHTML = `
+          <div style="flex:1">
+            <div style="font-size:11px; color:#c8973a; margin-bottom:4px">👤 ${d.autorNombre}</div>
+            <p style="font-size:13px; color:#e0e8f8; margin-bottom:4px">${d.texto}</p>
+            <p style="font-size:10px; color:#4a6a8a">${fecha}</p>
+          </div>
+          <button class="btn-eliminar" onclick="eliminarMensaje('${documento.id}')">Eliminar</button>
+        `;
+        lista.appendChild(div);
+      });
+    } catch(e) {
+      lista.innerHTML = '<p style="color:#e07070; font-size:13px">Error: ' + e.message + '</p>';
+    }
+  }
+
   window.eliminarNoticia = async function(id) {
     if (!db) return;
     if (!confirm('¿Seguro que quieres eliminar esta noticia?')) return;
     await deleteDoc(doc(db, 'noticias', id));
     cargarNoticias();
+  }
+
+  window.eliminarMensaje = async function(id) {
+    if (!db) return;
+    if (!confirm('¿Seguro que quieres eliminar este mensaje?')) return;
+    await deleteDoc(doc(db, 'comunidad', id));
+    cargarMensajes();
   }
 
   // Cargar config guardada
