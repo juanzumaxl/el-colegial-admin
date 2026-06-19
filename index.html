@@ -215,7 +215,13 @@
     if (!db) { mostrarMensaje('msg-publicar', 'Primero guarda la configuración de Firebase.', 'error'); return; }
     const titulo = document.getElementById('titulo').value.trim();
     const contenido = document.getElementById('contenido').value.trim();
+    const categoria = document.getElementById('categoria').value;
+    const imagenUrl = document.getElementById('imagenUrl').value.trim();
     if (!titulo || !contenido) { mostrarMensaje('msg-publicar', 'El título y contenido son obligatorios.', 'error'); return; }
+    if (categoria === 'Galería' && !imagenUrl) {
+      mostrarMensaje('msg-publicar', '❌ Para Galería debes subir una imagen.', 'error');
+      return;
+    }
     const btn = document.getElementById('btn-publicar');
     btn.disabled = true;
     btn.textContent = 'Publicando...';
@@ -223,9 +229,9 @@
       await addDoc(collection(db, 'noticias'), {
         titulo,
         contenido,
-        categoria: document.getElementById('categoria').value,
+        categoria,
         fecha: document.getElementById('fecha').value.trim() || new Date().toLocaleDateString('es-MX', {month:'long', year:'numeric'}),
-        imagenUrl: document.getElementById('imagenUrl').value.trim(),
+        imagenUrl,
         destacada: document.getElementById('destacada').checked
       });
       mostrarMensaje('msg-publicar', '✅ Noticia publicada correctamente.', 'ok');
