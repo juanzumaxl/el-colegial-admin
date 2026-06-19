@@ -79,7 +79,7 @@
     <h2>📝 Publicar nueva noticia</h2>
     <label>Título</label>
     <input type="text" id="titulo" placeholder="Título de la noticia">
-    <label>Contenido</label>
+    <label id="label-contenido">Contenido</label>
     <textarea id="contenido" placeholder="Escribe el contenido completo de la noticia..."></textarea>
     <label>Categoría</label>
     <select id="categoria">
@@ -104,7 +104,7 @@
     <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
     <input type="text" id="imagenUrl" placeholder="URL de imagen (se llena automáticamente al subir)" style="margin-top:8px" readonly>
 
-    <div class="toggle-row">
+    <div class="toggle-row" id="row-destacada">
       <input type="checkbox" id="destacada">
       <label for="destacada">Marcar como noticia destacada</label>
     </div>
@@ -147,6 +147,14 @@
     el.style.display = 'block';
     setTimeout(() => el.style.display = 'none', 4000);
   }
+
+  // Mostrar/ocultar campos según categoría
+  document.getElementById('categoria').addEventListener('change', function() {
+    const esGaleria = this.value === 'Galería';
+    document.getElementById('contenido').style.display = esGaleria ? 'none' : 'block';
+    document.getElementById('label-contenido').style.display = esGaleria ? 'none' : 'block';
+    document.getElementById('row-destacada').style.display = esGaleria ? 'none' : 'flex';
+  });
 
   window.guardarConfig = function() {
     const config = {
@@ -217,11 +225,9 @@
     const contenido = document.getElementById('contenido').value.trim();
     const categoria = document.getElementById('categoria').value;
     const imagenUrl = document.getElementById('imagenUrl').value.trim();
-    if (!titulo || !contenido) { mostrarMensaje('msg-publicar', 'El título y contenido son obligatorios.', 'error'); return; }
-    if (categoria === 'Galería' && !imagenUrl) {
-      mostrarMensaje('msg-publicar', '❌ Para Galería debes subir una imagen.', 'error');
-      return;
-    }
+    if (!titulo) { mostrarMensaje('msg-publicar', 'El título es obligatorio.', 'error'); return; }
+    if (categoria !== 'Galería' && !contenido) { mostrarMensaje('msg-publicar', 'El contenido es obligatorio.', 'error'); return; }
+    if (categoria === 'Galería' && !imagenUrl) { mostrarMensaje('msg-publicar', '❌ Para Galería debes subir una imagen.', 'error'); return; }
     const btn = document.getElementById('btn-publicar');
     btn.disabled = true;
     btn.textContent = 'Publicando...';
